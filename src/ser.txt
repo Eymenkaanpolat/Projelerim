@@ -1,0 +1,28 @@
+#include <util/delay.h>
+#include "gpio.h"
+#include "servo.h"
+#include "uart.h"
+
+int main(void)
+{
+    uart_basla();         
+    servo_basla('B', 2);  
+
+    uart_yaz("\r\n--- Canli Birlestirilmis Konsol Aktif ---\r\n");
+    uart_yaz("Kullanim: S0000 - S1023 arasi yazin.\r\n\r\n");
+
+    while (1)
+    {
+        // 'S' cihaz koduyla 1023 modunda veriyi doğrudan harfR ile oku kanka!
+        uint16_t gelen_deger = uart_harfR('S'); 
+
+        // 0-1023 aralığını 0-180 dereceye oranla
+        uint8_t hesaplanan_aci = (uint8_t)((gelen_deger * 180UL) / 1023UL);
+
+        // Kusursuz switch-case servomuza açıyı gönder
+        servo_yaz('B', 2, hesaplanan_aci);
+        
+        uart_yaz(" -> Motor konumlandirildi!\r\n\r\nYeni veri: ");
+    }
+    return 0;
+}

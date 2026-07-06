@@ -1,0 +1,71 @@
+#include <util/delay.h>
+#include "gpio.h"
+#include "uart.h"
+#include "interrupt.h"
+#define k 4
+#define s 5
+#define y 6
+#define za 150
+#define z 100
+volatile uint8_t i = 1;
+ISR(INT0_vect)
+{
+    i = !i;
+    if (i == 1)
+    {
+        uart_yaz("System Active: \n");
+    }
+    else
+    {
+        uart_yaz("System Passive: \n");
+    }
+    
+}
+
+int main(void)
+{
+    pin_mod('D', k, 1);
+    pin_mod('D', s, 1);
+    pin_mod('D', y, 1);
+    pin_mod('D', 2, 0);
+    pinW('D', 2, 1);
+    uart_basla();
+    uart_yaz("System Active: \n");
+    kesme_basla(KESME_INT0, TETIK_DUSEN);
+    sei(); // Enable global interrupts
+    while (1)
+    {
+          if (i == 1)
+        {
+
+            pinW('D', y, 1);
+            uart_yaz("Green Led On \n");
+            _delay_ms(za);
+            pinW('D', s, 1);
+            uart_yaz("Yellow Led On \n");
+            _delay_ms(z);
+            pinW('D', y, 0);
+            uart_yaz("Green Led Off \n");
+            _delay_ms(za);
+            pinW('D', k, 1);
+            uart_yaz("Red Led On \n");
+            _delay_ms(z);
+            pinW('D', s, 0);
+            uart_yaz("Yellow Led Off \n");
+            _delay_ms(za);
+            pinW('D', k, 0);
+            uart_yaz("Red Led Off \n");
+            _delay_ms(z);
+        }
+        else
+        {
+            pinW('D', k, 0);
+            pinW('D', s, 0);
+            pinW('D', y, 0);
+            _delay_ms(1000);
+            uart_yaz("All Led Off \n");
+            _delay_ms(1000);
+        }
+    }
+    return 0; // Return statement to indicate successful execution
+}

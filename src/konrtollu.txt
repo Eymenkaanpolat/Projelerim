@@ -1,0 +1,122 @@
+#include <util/delay.h>
+#include "gpio.h"
+#include "uart.h"
+#include "interrupt.h"
+#include "analogR.h"
+
+#define police 0
+#define output 4
+#define buzzer 2
+
+volatile uint8_t i = 1;
+volatile uint32_t son_basilma_zamani = 0;
+ISR(INT0_vect)
+{
+
+    _delay_us(500);
+
+    if (pinR('D', 2) == 0)
+    {
+        i = !i;
+
+        if (i == 1)
+        {
+            uart_yaz("System Active\n");
+        }
+        else
+        {
+            uart_yaz("System Passive\n");
+        }
+
+        while (pinR('D', 2) == 0)
+            ;
+
+        _delay_us(500);
+    }
+}
+int main(void)
+{
+    pin_mod('D', output, 1);
+    
+    pin_mod('B', 1, 1);
+    pin_mod('B', 0, 1);
+    pin_mod('B', buzzer, 1);
+
+    pin_mod('D', 2, 0);
+    pinW('D', 2, 1);
+
+    
+
+    uart_basla();
+    uint16_t deger;
+    uart_yaz("System Active\n");
+    kesme_basla(KESME_INT0, TETIK_DUSEN);
+    sei();
+    uint8_t counter = 0;
+
+    while (1)
+    {
+        deger = analogR(0);
+        pinW('D', output, 1);
+        _delay_ms(500 );
+        if (i == 1)
+        {
+
+            if (deger == 1023)
+            {
+
+                while (deger == 1023 && i == 1)
+                {
+                    uart_yaz("[ERROR] Red LED is Faulty\n");
+                    pinW('D', output, 0);
+                    pinW('B', 0, 1);
+                    pinW('B', 1, 0);
+                    _delay_ms(1000);
+                    if (counter == 0)
+                    {
+
+                        pinW('B', buzzer, 1);
+                        _delay_ms(300);
+                        pinW('B', buzzer, 0);
+
+                        counter = 1;
+                    }
+                    _delay_ms(1000);
+                    deger = analogR(0);
+                }
+
+                if (i == 1)
+                {
+                    
+                    uart_yaz("[INFO] Red LED Fixed & Active\n");
+                    pinW('B', 0, 0);
+                    pinW('B', 1, 1);
+                    pinW('B', buzzer, 1);
+                    _delay_ms(75);
+                    pinW('B', buzzer, 0);
+                    _delay_ms(75);
+                    pinW('B', buzzer, 1);
+                    _delay_ms(75);
+                    pinW('B', buzzer, 0);
+                    _delay_ms(75);
+                    counter = 0;
+                    _delay_ms(700);
+                }
+            }
+
+            pinW('B', 1, 0);
+            _delay_ms(500);
+        }
+        else
+        {
+
+            pinW('D', output, 0);
+            pinW('B', 0, 0);
+            pinW('B', 1, 0);
+            _delay_ms(100);
+        }
+        pinW('D', output, 0);
+        _delay_ms(500);
+    }
+    return 0;
+}

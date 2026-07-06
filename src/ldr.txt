@@ -1,0 +1,29 @@
+#include "gpio.h"
+#include "analogR.h"
+#include "uart.h"
+#include <stdio.h>
+#include <util/delay.h>
+int main(void)
+{
+   uart_basla();
+   pin_mod('D', 4, 1);
+   uint16_t ldr;
+   char parlaklik[16];
+    while(1)
+    {
+        ldr = analogR(0);
+        sprintf(parlaklik, "LDR: %u\n", ldr);
+        uart_yaz(parlaklik);
+        _delay_ms(1000);
+        if (ldr > 900)
+        {
+            pinW('D', 4, 1);
+        }
+        else
+        {
+            pinW('D', 4, 0);
+        }
+        
+    }
+    return 0;
+}
