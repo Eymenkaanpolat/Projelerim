@@ -1,0 +1,21 @@
+#include "gpio.h"
+#include "step.h"
+#include <util/delay.h>
+int main(void)
+{
+   pin_mod('B', 0, 1);
+   pin_mod('B', 1, 1);
+   pin_mod('B', 2, 1);
+   pin_mod('B', 3, 1);
+   step_hiz = 1500;
+   while(1)
+   {
+      motor_basla('B', 0, 1, 2, 3, 2048, 1);
+      _delay_ms(1000);
+      motor_basla('B', 0, 1, 2, 3, 2048, 0);
+      _delay_ms(1000);
+   }
+
+   return 0;
+    
+}
