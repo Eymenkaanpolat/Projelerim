@@ -2,94 +2,136 @@
 
 #define BAUD_ORANI 103
 
-void uart_basla(void) {
+void uart_basla(void)
+{
     UBRR0H = (BAUD_ORANI >> 8);
     UBRR0L = BAUD_ORANI;
+
     UCSR0B = (1 << TXEN0) | (1 << RXEN0);
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }
 
-void uart_harfW(char harf) {
+void uart_harfW(char harf)
+{
     while (!(UCSR0A & (1 << UDRE0)));
     UDR0 = harf;
 }
 
-void uart_yaz(char* yazi) {
-    while (*yazi) {
-        uart_harfW(*yazi);
-        yazi++;
+void uart_yaz(char *yazi)
+{
+    while (*yazi)
+    {
+        uart_harfW(*yazi++);
     }
 }
 
-// Sayısal değeri UART üzerinden gönderir (0 - 65535)
-void uart_degerW(uint16_t deger) {
-    char tampon[6];
+void uart_degerW(uint32_t sayi)
+{
+    char tampon[10];
     uint8_t i = 0;
 
-    // Eğer değer 0 ise direkt gönder
-    if (deger == 0) {
+    if (sayi == 0)
+    {
         uart_harfW('0');
         return;
     }
 
-    // Basamakları ters sırayla tampona yaz
-    while (deger > 0) {
-        tampon[i++] = (deger % 10) + '0';
-        deger /= 10;
+    while (sayi)
+    {
+        tampon[i++] = (sayi % 10) + '0';
+        sayi /= 10;
     }
 
-    // Tampondaki karakterleri doğru sırayla gönder
-    while (i > 0) {
+    while (i)
+    {
         uart_harfW(tampon[--i]);
     }
 }
 
-// Birleştirilmiş Siber Fonksiyon: Canlı olarak 1023'lük paketi yakalar
-uint16_t uart_harfR(char hedef_cihaz) {
-    char tampon[5];
-    uint8_t indeks = 0;
+uint32_t uart_harfR(char *cihaz)
+{
+    char c;
+    uint32_t sonuc;
+    uint8_t rakam_sayisi;
 
-    while (1) {
-        // Donanımsal buffer'a veri düşene kadar bekle kanka
+yeni_paket:
+
+    sonuc = 0;
+    rakam_sayisi = 0;
+
+    while (!(UCSR0A & (1 << RXC0)));
+    c = UDR0;
+
+    if (c == '\r' || c == '\n' || c == ' ')
+        goto yeni_paket;
+
+    if (c >= 'a' && c <= 'z')
+        c -= 32;
+
+    if (!(c >= 'A' && c <= 'Z'))
+        goto yeni_paket;
+
+    *cihaz = c;
+
+    uart_harfW(c);
+
+    while (1)
+    {
         while (!(UCSR0A & (1 << RXC0)));
-        char c = UDR0;
+        c = UDR0;
 
-        // Satır sonu karakterlerini filtrele
-        if (c != '\n' && c != '\r') {
-            tampon[indeks] = c;
-            indeks++;
-            uart_harfW(c); // Echo
+       if (c == '\r' || c == '\n')
+{
+    if (rakam_sayisi == 0)
+    {
+        uart_yaz("\r\nHata: Sayi girilmedi!\r\n");
+        goto yeni_paket;
+    }
 
-            // 5 karakter ulaştıysa (Örn: S1023)
-            if (indeks == 5) {
-                indeks = 0;
+    uart_yaz("\r\n");
+    return sonuc;
+}
 
-                // Harf kontrolü (Büyük-küçük harf duyarsız)
-                if (tampon[0] == hedef_cihaz ||
-                    tampon[0] == (hedef_cihaz + 32) ||
-                    tampon[0] == (hedef_cihaz - 32)) {
+        uart_harfW(c);
+                if (c >= '0' && c <= '9')
+        {
+            if (rakam_sayisi < 6)
+            {
+                sonuc = (sonuc * 10) + (c - '0');
+                rakam_sayisi++;
+            }
+            else
+            {
+                uart_yaz("\r\nHata: En fazla 6 rakam!\r\n");
 
-                    uint16_t binler = tampon[1] - '0';
-                    uint16_t yuzler = tampon[2] - '0';
-                    uint16_t onlar  = tampon[3] - '0';
-                    uint16_t birler = tampon[4] - '0';
+                // Satır sonuna kadar tamponu temizle
+                while (1)
+                {
+                    while (!(UCSR0A & (1 << RXC0)));
+                    c = UDR0;
 
-                    uint16_t sonuc = (binler * 1000) +
-                                     (yuzler * 100) +
-                                     (onlar * 10) +
-                                     birler;
-
-                    if (sonuc <= 1023) {
-                        return sonuc;
-                    } else {
-                        uart_yaz(" -> Hata: Deger > 1023!\r\n");
-                    }
-                } else {
-                    uart_yaz(" -> Hata: Gecersiz cihaz kodu!\r\n");
+                    if (c == '\r' || c == '\n')
+                        break;
                 }
 
-                uart_yaz("\r\nYeni veri gir kanka: ");
+                goto yeni_paket;
             }
+        }
+        else
+        {
+            uart_yaz("\r\nHata: Gecersiz karakter!\r\n");
+
+            // Satır sonuna kadar tamponu temizle
+            while (1)
+            {
+                while (!(UCSR0A & (1 << RXC0)));
+                c = UDR0;
+
+                if (c == '\r' || c == '\n')
+                    break;
+            }
+
+            goto yeni_paket;
         }
     }
 }

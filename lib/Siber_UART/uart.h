@@ -2,20 +2,15 @@
 #define UART_H_
 
 #include <avr/io.h>
+#include <stdint.h>
 
-// Haberleşmeyi 9600 hızında başlatır kanka
 void uart_basla(void);
-
-// Bilgisayara tek bir harf/karakter fırlatır
 void uart_harfW(char harf);
+void uart_yaz(char *yazi);
+void uart_degerW(uint32_t sayi);
 
-// Bilgisayara upuzun bir yazı (string) gönderir
-void uart_yaz(char* yazi);
+// Gelen cihaz harfini cihaz değişkenine yazar.
+// Sayısal değeri geri döndürür.
+uint32_t uart_harfR(char *cihaz);
 
-// Bilgisayara 0-65535 arası sayısal değer gönderir
-void uart_degerW(uint16_t deger);
-
-// Bilgisayardan gelen 5 karakterlik paketi yakalar ve 1023'lük değeri döner kanka
-uint16_t uart_harfR(char hedef_cihaz);
-
-#endif /* UART_H_ */
+#endif
