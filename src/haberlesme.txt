@@ -1,0 +1,27 @@
+#include "uart.h"
+#include <util/delay.h>
+int main(void)
+{
+
+    uart_basla();
+    char cihaz;
+    uint32_t deger;
+
+    while(1)
+    {
+        deger = uart_harfR(&cihaz);
+        if (cihaz == 'A')
+        {
+            if (deger == 1)
+            {
+                uart_yaz("Com");
+               _delay_ms(100);
+            }
+        }
+    }
+    return 0;
+}
+/* 
+A1 yazarsanız "com" yazısı gelecektir.
+A0001'de de aynı yazı.
+*/
