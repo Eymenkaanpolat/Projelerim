@@ -9,6 +9,7 @@ int main(void)
     pin_mod('D', 3, 1);
     pin_mod('D', 4, 1);
     pin_mod('D', 5, 1);
+    pin_mod('D', 6, 1);
     uart_basla();
     while (1)
     {
@@ -30,8 +31,10 @@ int main(void)
             }
             else {
                 pinW('D', 5, 1);
+                pinW('D', 6, 1);
                 _delay_ms(1000);
                 pinW('D', 5, 0);
+                pinW('D', 6, 0);
             }
           
             _delay_ms(1000);
