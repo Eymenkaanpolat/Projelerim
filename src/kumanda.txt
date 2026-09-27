@@ -1,0 +1,59 @@
+#include "ir.h"
+#include <util/delay.h>
+int main(void)
+{
+    uint32_t kod = 0;
+
+    ir_basla();
+    while (1)
+    {
+        if (ir_veri_var())
+        {
+            kod = ir_oku();
+            if (kod == 0xE31CFF00)
+            {
+                _delay_ms(250);
+                irW(0xB8476229);
+            }
+            else if (kod == 0xE916FF00)
+            {
+                _delay_ms(250);
+                irW(0xF50A6229);
+            }
+            else if (kod == 0xE718FF00)
+            {
+                _delay_us(250);
+                irW(0xBD426229);
+            }
+            else if (kod == 0xAD52FF00)
+            {
+                _delay_ms(250);
+                irW(0xBC436229);
+            }
+            else if (kod == 0xA55AFF00)
+            {
+                _delay_ms(250);
+                irW(0xBF406229);
+            }
+            else if (kod == 0xF708FF00)
+            {
+                _delay_ms(250);
+                irW(0xBE416229);
+            }
+            else if (kod == 0xEA15FF00)
+            {
+                _delay_ms(250);
+                irW(0xF7086229);
+            }
+            else if (kod == 0xB946FF00)
+            {
+                _delay_ms(250);
+                irW(0xFD026229);
+            }
+        }
+    }
+}
+/*
+ır alıcı D3
+ır verici D11 
+*/

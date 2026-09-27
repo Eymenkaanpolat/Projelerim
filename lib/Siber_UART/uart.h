@@ -13,5 +13,6 @@ void uart_yaz(const char *yazi);
 void uart_degerW(uint32_t sayi);
 char uart_char_oku(void);
 uint32_t uart_harfR(char *cihaz);
+void uart_hexW(uint32_t sayi);
 
 #endif /* UART_H_ */

@@ -52,6 +52,57 @@ void ir_temizle(void)
     ir_repeat = 0;
     gecerli_kod_var = 0;
 }
+void irW(uint32_t kod)
+{
+    // D11 / PB3 / OC2A çıkış
+    DDRB |= (1 << PB3);
+
+    // Timer2 CTC modu
+    // 16 MHz / (2 * (OCR2A + 1)) ≈ 38 kHz
+    TCCR2A = (1 << WGM21);
+    TCCR2B = (1 << CS20);
+
+    OCR2A = 209;
+
+    // Taşıyıcı KAPALI
+    TCCR2A &= ~(1 << COM2A0);
+    PORTB &= ~(1 << PB3);
+
+    // NEC başlangıç: 9 ms taşıyıcı
+    TCCR2A |= (1 << COM2A0);
+    _delay_ms(9);
+
+    // 4.5 ms boşluk
+    TCCR2A &= ~(1 << COM2A0);
+    PORTB &= ~(1 << PB3);
+    _delay_ms(4.5);
+
+    // 32 bit, LSB first
+    for (uint8_t i = 0; i < 32; i++)
+    {
+        // 562 us taşıyıcı
+        TCCR2A |= (1 << COM2A0);
+        _delay_us(562);
+
+        // Taşıyıcı kapat
+        TCCR2A &= ~(1 << COM2A0);
+        PORTB &= ~(1 << PB3);
+
+        // Bit değerine göre boşluk
+        if (kod & ((uint32_t)1 << i))
+            _delay_us(1687);
+        else
+            _delay_us(562);
+    }
+
+    // Son 562 us taşıyıcı
+    TCCR2A |= (1 << COM2A0);
+    _delay_us(562);
+
+    // Taşıyıcı kapat
+    TCCR2A &= ~(1 << COM2A0);
+    PORTB &= ~(1 << PB3);
+}
 
 ISR(INT1_vect)
 {

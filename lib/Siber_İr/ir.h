@@ -10,5 +10,8 @@ void ir_basla(void);
 uint8_t ir_veri_var(void);
 uint32_t ir_oku(void);
 void ir_temizle(void);
+uint8_t ir_repeat_var(void);
+void ir_repeat_temizle(void);
+void irW(uint32_t kod);
 
 #endif /* IR_H_ */

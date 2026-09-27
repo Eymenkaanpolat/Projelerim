@@ -10,11 +10,24 @@ void uart_basla(void)
     // 8-bit veri, 1 stop biti, parity yok
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }
+void uart_hexW(uint32_t sayi)
+{
+
+    char hex[] = "0123456789ABCDEF";
+
+    uart_yaz("0x");
+
+    for (int8_t i = 7; i >= 0; i--)
+    {
+        uart_harfW(hex[(sayi >> (i * 4)) & 0x0F]);
+    }
+}
 
 // Tek bir karakter gönderir
 void uart_harfW(char harf)
 {
-    while (!(UCSR0A & (1 << UDRE0)));
+    while (!(UCSR0A & (1 << UDRE0)))
+        ;
     UDR0 = harf;
 }
 
@@ -54,7 +67,8 @@ void uart_degerW(uint32_t sayi)
 // Seri porttan TEK karakter bekler ve döner (Bloklayan okuma)
 char uart_char_oku(void)
 {
-    while (!(UCSR0A & (1 << RXC0)));
+    while (!(UCSR0A & (1 << RXC0)))
+        ;
     return UDR0;
 }
 
@@ -62,7 +76,8 @@ char uart_char_oku(void)
 static void tamponu_temizle(void)
 {
     char c;
-    do {
+    do
+    {
         c = uart_char_oku();
     } while (c != '\r' && c != '\n');
 }

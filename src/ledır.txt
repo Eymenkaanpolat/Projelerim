@@ -1,0 +1,184 @@
+#include "ir.h"
+#include "uart.h"
+#include <util/delay.h>
+#include "gpio.h"
+#include "pwm.h"
+
+int main(void)
+{
+    uint8_t a = 0;
+    uint8_t b = 0;
+    uint8_t c = 0;
+    uint8_t o = 0;
+    uint8_t p = 0;
+
+    uint32_t kod;
+
+    pwm_basla(PWM_D5);
+    pwm_basla(PWM_B3);
+    pwm_basla(PWM_D6);
+
+    pin_mod('D', 4, 1);
+
+    uart_basla();
+    ir_basla();
+
+    while (1)
+    {
+        pinW('D', 4, 0);
+
+        if (ir_veri_var())
+        {
+            kod = ir_oku();
+
+            // IR alındığını göster
+            pinW('D', 4, 1);
+            _delay_ms(100);
+            pinW('D', 4, 0);
+
+            // PARLAKLIK ARTIR
+            if (kod == 0xFF00EF00)
+            {
+                if (p <= 230) {
+               
+                    p += 25;
+                }
+                else
+                {
+                    p = 255;
+                }
+                uart_yaz("PWM:");
+                uart_degerW(p);
+                uart_yaz("\r\n");
+
+                // Açık olan kanalları yeni parlaklığa getir
+                if (a == 1)
+                    pinPWM(PWM_B3, p);
+
+                if (b == 1)
+                    pinPWM(PWM_B2, p);
+
+                if (c == 1)
+                    pinPWM(PWM_B1, p);
+            }
+
+            // PARLAKLIK AZALT
+            else if (kod == 0xFE01EF00)
+            {
+                if (p >= 25)
+                {
+                    p -= 25;
+                }
+                else
+                {
+                    p = 0;
+                }
+                uart_yaz("PWM:");
+                uart_degerW(p);
+                uart_yaz("\r\n");
+
+                // Açık olan kanalları yeni parlaklığa getir
+                if (a == 1)
+                    pinPWM(PWM_B3, p);
+
+                if (b == 1)
+                    pinPWM(PWM_D5, p);
+
+                if (c == 1)
+                    pinPWM(PWM_D6, p);
+            }
+
+            // 1. KANAL
+            else if (kod == 0xFB04EF00)
+            {
+                uart_yaz("1. tus\r\n");
+
+                a = !a;
+
+                if (a == 1)
+                {
+                    pinPWM(PWM_B3, p);
+                }
+                else
+                {
+                    pinPWM(PWM_B3, 0);
+                }
+            }
+
+            // 2. KANAL
+            else if (kod == 0xEB14EF00)
+            {
+                uart_yaz("2. tus\r\n");
+
+                b = !b;
+
+                if (b == 1)
+                {
+                    pinPWM(PWM_D5, p);
+                }
+                else
+                {
+                    pinPWM(PWM_D5, 0);
+                }
+            }
+
+            // 3. KANAL
+            else if (kod == 0xFA05EF00)
+            {
+                uart_yaz("3. tus\r\n");
+
+                c = !c;
+
+                if (c == 1)
+                {
+                    pinPWM(PWM_D6, p);
+                }
+                else
+                {
+                    pinPWM(PWM_D6, 0);
+                }
+            }
+
+            // HEPSİ AÇ / KAPAT
+            else if (kod == 0xE31CFF00)
+            {
+                o = !o;
+
+                a = 0;
+                b = 0;
+                c = 0;
+
+                if (o == 1)
+                {
+                    pinPWM(PWM_B3, p);
+                    pinPWM(PWM_D5, p);
+                    pinPWM(PWM_D6, p);
+                }
+                else
+                {
+                    pinPWM(PWM_B3, 0);
+                    pinPWM(PWM_D5, 0);
+                    pinPWM(PWM_D6, 0);
+                }
+            }
+
+            // Yeni kodun tekrar tekrar algılanmasını engelle
+            _delay_ms(250);
+        }
+
+        // Çok kısa zamanlama gecikmesi
+        _delay_us(100);
+
+        // BASILI TUTMA / REPEAT
+        if (ir_repeat_var())
+        {
+            pinW('D', 4, 1);
+
+            uart_yaz("basili tutma\r\n");
+
+            ir_repeat_temizle();
+
+            _delay_ms(100);
+        }
+    }
+}
