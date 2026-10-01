@@ -1,0 +1,40 @@
+#include "analogR.h"
+#include "gpio.h"
+#include "uart.h"
+#include <util/delay.h>
+int main(void)
+{
+    pin_mod('B', 0, 1);
+    pin_mod('B', 4, 1);
+    uart_basla();
+    uint16_t right = 0;
+    uint16_t left = 0;
+    while (1)
+    {
+        left = analogR(0);
+        right = analogR(1);
+
+        if (left > 110)
+        {
+            pinW('B', 4, 1);
+            uart_yaz("left:");
+            uart_degerW(left);
+            uart_yaz("\r\n");
+        }
+        else
+        {
+            pinW('B', 4, 0);
+        }
+        if (right > 110)
+        {
+            pinW('B', 0, 1);
+            uart_yaz("right:");
+            uart_degerW(right);
+            uart_yaz("\r\n");
+        }
+        else
+        {
+            pinW('B', 0, 0);
+        }
+    }
+}
