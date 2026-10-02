@@ -11,5 +11,6 @@ void sonar_tetikle(void);
 
 // En son ölçülen mesafeyi santimetre (cm) olarak döner
 uint16_t sonar_mesafe_oku(void);
+extern volatile uint8_t olcum_bitti_mi;
 
 #endif /* SONAR_H_ */

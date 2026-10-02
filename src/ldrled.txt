@@ -1,40 +1,73 @@
 #include "analogR.h"
 #include "gpio.h"
 #include "uart.h"
+#include "pwm.h"
+#include "interrupt.h"
 #include <util/delay.h>
+volatile uint8_t i = 1;
+ISR(INT0_vect)
+{
+    i = !i;
+}
 int main(void)
 {
-    pin_mod('B', 0, 1);
-    pin_mod('B', 4, 1);
+    kesme_basla(KESME_INT0, TETIK_DUSEN);
     uart_basla();
+    pin_mod('D', 2, 0);
+    pin_mod('B', 1, 1);
+    pin_mod('B', 2, 1);
+    pinW('D', 2, 1);
+    pwm_basla(PWM_B1);
+    pwm_basla(PWM_B2);
     uint16_t right = 0;
     uint16_t left = 0;
+    uint8_t pwm1 = 0;
+    uint8_t pwm2 = 0;
+    sei();
     while (1)
     {
-        left = analogR(0);
-        right = analogR(1);
+        if (i == 1)
+        {
+            left = analogR(0);
+            right = analogR(1);
+            pwm1 = ((uint32_t)left * 255) / 1023;
+            pwm2 = ((uint32_t)right * 255) / 1023;
 
-        if (left > 110)
-        {
-            pinW('B', 4, 1);
-            uart_yaz("left:");
-            uart_degerW(left);
-            uart_yaz("\r\n");
+            if (left > 110)
+            {
+                _delay_ms(50);
+                pinPWM(PWM_B2, pwm1);
+                uart_yaz("left:");
+                uart_degerW(left);
+                uart_yaz("\r\n");
+            }
+            else
+            {
+                pinPWM(PWM_B2, 0);
+                pinW('B', 2, 0);
+            }
+            if (right > 110)
+            {
+                _delay_ms(50);
+                pinPWM(PWM_B1, pwm2);
+                uart_yaz("right:");
+                uart_degerW(right);
+                uart_yaz("\r\n");
+            }
+            else
+            {
+                pinPWM(PWM_B1, 0);
+                pinW('B', 1, 0);
+            }
         }
         else
         {
-            pinW('B', 4, 0);
-        }
-        if (right > 110)
-        {
-            pinW('B', 0, 1);
-            uart_yaz("right:");
-            uart_degerW(right);
-            uart_yaz("\r\n");
-        }
-        else
-        {
-            pinW('B', 0, 0);
+            uart_yaz("interrupt devrede\n");
+            pinPWM(PWM_B1, 0);
+            pinPWM(PWM_B2, 0);
+            pinW('B', 1, 0);
+            pinW('B', 2, 0);
+            _delay_ms(1000);
         }
     }
 }
